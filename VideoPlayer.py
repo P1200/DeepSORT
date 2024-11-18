@@ -3,15 +3,15 @@ import cv2
 
 class VideoPlayer:
 
-    def __init__(self, video_path):
-        self.capture = cv2.VideoCapture(video_path)
+    def __init__(self):
+        self.length = 0
+        self.current_index = 0
+        self.capture = None
 
-    def play(self):
+    def play(self, capture):
+        self.capture = capture
         is_paused = False
-
-        # Check if camera opened successfully
-        if not self.capture.isOpened():
-            print("Error opening video file")
+        self.length = self.capture.__len__()
 
         # Read until video is completed
         while True:
@@ -28,34 +28,24 @@ class VideoPlayer:
                 is_paused = not is_paused
 
             if pressed_key == ord('r'):
-                self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                self.current_index = 0
 
             if pressed_key == ord('a'):
-                self.__move_frames(-30)
+                self.__move_frames__(-30)
 
             if pressed_key == ord('d'):
-                self.__move_frames(30)
+                self.__move_frames__(30)
 
             if not is_paused:
-                self.__read_and_show_frame()
-
-        # When everything done, release the video capture object
-        self.capture.release()
+                self.__read_and_show_frame__()
 
         # Closes all the frames
         cv2.destroyAllWindows()
 
-    def __move_frames(self, frames):
-        current_frame = int(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
-        # Calculate the frame number to rewind to
-        new_frame = max(0, current_frame + frames)
-        # Set the video to the new frame
-        self.capture.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
-        self.__read_and_show_frame()
+    def __move_frames__(self, frames):
+        self.current_index += frames
 
-    def __read_and_show_frame(self):
-        # Capture frame-by-frame
-        ret, frame = self.capture.read()
-        if ret:
-            # Display the resulting frame
-            cv2.imshow('DeepSORT object tracking', frame)
+    def __read_and_show_frame__(self):
+        if self.current_index != self.length - 1:
+            cv2.imshow('DeepSORT object tracking', self.capture[self.current_index])
+            self.current_index += 1
