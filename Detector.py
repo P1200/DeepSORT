@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from BoundingBox import BoundingBox
+
 
 class Detector:
     def __init__(self):
@@ -21,6 +23,8 @@ class Detector:
         output_layer_name = self.net.getUnconnectedOutLayersNames()
         output_layers = self.net.forward(output_layer_name)
 
+        boxes = []
+
         # Loop over the output layers
         for output in output_layers:
             people_detections = output[0, 4]
@@ -36,10 +40,8 @@ class Detector:
                     # Rectangle coordinates
                     x = int(center_x * width / 640 - w / 2)
                     y = int(center_y * height / 640 - h / 2)
-
-                    # Add the detection to the list of people
-                    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        return image
+                    boxes.append(BoundingBox(x, y, w, h))
+        return boxes
 
     def detectYOLOv4(self, image):
 
@@ -53,6 +55,8 @@ class Detector:
         # Perform forward propagation
         output_layer_name = self.netv4.getUnconnectedOutLayersNames()
         output_layers = self.netv4.forward(output_layer_name)
+
+        boxes = []
 
         # Loop over the output layers
         for output in output_layers:
@@ -74,6 +78,5 @@ class Detector:
                     # Rectangle coordinates
                     x = int(center_x - w / 2)
                     y = int(center_y - h / 2)
-
-                    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        return image
+                    boxes.append(BoundingBox(x, y, w, h, center_x, center_y))
+        return boxes
