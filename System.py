@@ -1,9 +1,8 @@
-import math
 import time
 
 import cv2
+import numpy as np
 
-from BoundingBox import BoundingBox
 from Detector import Detector
 from Tracker import Tracker
 from VideoPlayer import VideoPlayer
@@ -33,6 +32,19 @@ class System:
         while ret:
             row = []
             boxes = detector.detectYOLOv4(frame)
+
+            if len(trackers) == 0:
+                for box in boxes:
+                    tracker = Tracker(box.center_x, box.center_y, box.w, box.h)
+                    trackers.append(tracker)
+                continue
+
+            data = np.array([[traker.pred_x, traker.pred_y] for traker in trackers])
+            covariance_matrix = np.cov(data.T)
+            epsilon = 1e-6  # Mała wartość dla stabilności
+            covariance_matrix += np.eye(covariance_matrix.shape[0]) * epsilon
+            inv_cov_matrix = np.linalg.inv(covariance_matrix)
+
             for i in range(len(boxes)):
                 x, y, w, h, center_x, center_y = boxes[i]
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -41,24 +53,25 @@ class System:
                     column = []
                     value = 99999  # big value
                     tracker_id = None
+
                     for j in range(len(trackers)):
-                        column.append(self.count_distance(boxes[i], trackers[j]))
+                        column.append(self.count_mahalanobis_distance((boxes[i].center_x, boxes[i].center_y), (trackers[j].pred_x, trackers[j].pred_y), inv_cov_matrix))
                         if value > column[j] and trackers[j].is_used is False:
                             value = column[j]
                             tracker_id = j
                     row.append(column)
 
-                    if value > 1000 or tracker_id is None:
-                        tracker = Tracker(center_x, center_y)
+                    if value > 90 or tracker_id is None:
+                        tracker = Tracker(center_x, center_y, w, h)
                         trackers.append(tracker)
                     else:
                         column.insert(tracker_id, None)
                         tracker = trackers[tracker_id]
 
                 else:
-                    tracker = Tracker(center_x, center_y)
+                    tracker = Tracker(center_x, center_y, w, h)
                     trackers.append(tracker)
-                pred_x, pred_y = tracker.predict()
+                pred_x, pred_y = tracker.pred_x, tracker.pred_y
                 tracker.update(center_x, center_y)
                 tracker.is_used = True
 
@@ -76,8 +89,8 @@ class System:
         capture.release()
         video_player.play(new_capture)
 
-    def count_distance(self, box: [BoundingBox], tracker: [Tracker]) -> float:
-        pred_x, pred_y = tracker.predict()
-        distance_x = box.center_x - pred_x
-        distance_y = box.center_y - pred_y
-        return math.sqrt((distance_x ** 2) + (distance_y ** 2))
+    def count_mahalanobis_distance(self, point1, point2, inv_cov_matrix) -> float:
+
+        delta = np.array(point1) - np.array(point2)
+        distance = np.sqrt(np.dot(np.dot(delta.T, inv_cov_matrix), delta))
+        return distance
