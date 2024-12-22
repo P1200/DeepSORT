@@ -35,13 +35,13 @@ class System:
 
             if len(trackers) == 0:
                 for box in boxes:
-                    tracker = Tracker(box.center_x, box.center_y, box.w, box.h)
+                    tracker = Tracker(box.x, box.y, box.w, box.h)
                     trackers.append(tracker)
                 continue
 
             data = np.array([[traker.pred_x, traker.pred_y] for traker in trackers])
             covariance_matrix = np.cov(data.T)
-            epsilon = 1e-6  # Mała wartość dla stabilności
+            epsilon = 1e-6
             covariance_matrix += np.eye(covariance_matrix.shape[0]) * epsilon
             inv_cov_matrix = np.linalg.inv(covariance_matrix)
 
@@ -55,29 +55,31 @@ class System:
                     tracker_id = None
 
                     for j in range(len(trackers)):
-                        column.append(self.count_mahalanobis_distance((boxes[i].center_x, boxes[i].center_y), (trackers[j].pred_x, trackers[j].pred_y), inv_cov_matrix))
+                        box_point = (boxes[i].x, boxes[i].y)
+                        tracker_point = (trackers[j].pred_x, trackers[j].pred_y)
+                        column.append(self.count_mahalanobis_distance(box_point, tracker_point, inv_cov_matrix))
                         if value > column[j] and trackers[j].is_used is False:
                             value = column[j]
                             tracker_id = j
                     row.append(column)
 
                     if value > 90 or tracker_id is None:
-                        tracker = Tracker(center_x, center_y, w, h)
+                        tracker = Tracker(x, y, w, h)
                         trackers.append(tracker)
                     else:
                         column.insert(tracker_id, None)
                         tracker = trackers[tracker_id]
 
                 else:
-                    tracker = Tracker(center_x, center_y, w, h)
+                    tracker = Tracker(x, y, w, h)
                     trackers.append(tracker)
-                pred_x, pred_y = tracker.pred_x, tracker.pred_y
-                tracker.update(center_x, center_y)
+                pred_x, pred_y, pred_w, pred_h = tracker.pred_x, tracker.pred_y, tracker.pred_w, tracker.pred_h
+                tracker.update(x, y, w, h)
                 tracker.is_used = True
 
-                cv2.circle(frame, (pred_x, pred_y), 5, (0, 0, 255), -1)
-                cv2.putText(frame, str(tracker.tracker_id), (x, y - 1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0),
-                            1, cv2.LINE_AA)
+                cv2.rectangle(frame, (pred_x, pred_y), (pred_x + pred_w, pred_y + pred_h), (0, 0, 255), 2)
+                cv2.putText(frame, str(tracker.tracker_id), (x, y - 1), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0),
+                            2, cv2.LINE_AA)
 
             for t in trackers:
                 t.is_used = False
@@ -89,7 +91,7 @@ class System:
         capture.release()
         video_player.play(new_capture)
 
-    def count_mahalanobis_distance(self, point1, point2, inv_cov_matrix) -> float:
+    def count_mahalanobis_distance(self, point1, point2, inv_cov_matrix) -> float:  # Four dimensions?
 
         delta = np.array(point1) - np.array(point2)
         distance = np.sqrt(np.dot(np.dot(delta.T, inv_cov_matrix), delta))
