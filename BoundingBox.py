@@ -6,6 +6,7 @@ class BoundingBox:
         self.h = h
         self.center_x = center_x
         self.center_y = center_y
+        self.is_used = False
 
     def __iter__(self):
         return iter((self.x, self.y, self.w, self.h, self.center_x, self.center_y))
