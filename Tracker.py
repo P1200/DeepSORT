@@ -1,5 +1,8 @@
+from statistics import mean
+
 import numpy as np
 
+import PersonReIdentifier
 from CustomKalmanFilter import CustomKalmanFilter
 
 
@@ -7,8 +10,11 @@ class Tracker:
     tracker_next_id = 1
 
     def __init__(self, u: [int], v: [int], w, h):
-        maxAge = 3
-        isTentative = True
+        self.age = 0
+        self.time_without_use = 0
+        self.is_tentative = True
+
+        self.descriptors = []
 
         F = np.array([[1, 0, 0, 0, 1, 0, 0, 0],
                       [0, 1, 0, 0, 0, 1, 0, 0],
@@ -57,8 +63,14 @@ class Tracker:
         self.pred_x, self.pred_y, self.pred_w, self.pred_h = int(prediction[0]), int(prediction[1]), int(
             prediction[2]), int(prediction[3])
 
+    def compare_descriptor(self, descriptor) -> float:
+        return mean(PersonReIdentifier.compare_descriptors(descriptor, d) for d in self.descriptors)
+
+    def __iter__(self):
+        return iter((self.pred_x, self.pred_y, self.pred_w, self.pred_h))
+
     def __str__(self):
-        return str(self.tracker_id) + "|" + str(Tracker.tracker_next_id) + "|" + str(self.is_used)
+        return str(self.tracker_id) + "|" + str(Tracker.tracker_next_id) + "|" + str(self.is_used) + "|" + str(self.age)
 
     def __repr__(self):
-        return str(self.tracker_id) + "|" + str(Tracker.tracker_next_id) + "|" + str(self.is_used)
+        return str(self.tracker_id) + "|" + str(Tracker.tracker_next_id) + "|" + str(self.is_used) + "|" + str(self.age)
