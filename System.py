@@ -114,9 +114,9 @@ class System:
 
             new_capture.append(frame)
             ret, frame = capture.read()
-            print(Tracker.tracker_next_id)
 
         print("Detections are ready in %s." % (time.time() - start_time))
+        print("Number of used trackers is: " + str(Tracker.tracker_next_id - 1))
         capture.release()
         video_player.play(new_capture)
         return new_capture
