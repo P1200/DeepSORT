@@ -4,8 +4,6 @@ class BoundingBox:
         self.y = y
         self.w = w
         self.h = h
-        # self.center_x = center_x
-        # self.center_y = center_y
         self.is_used = False
         self.descriptor = None
 
