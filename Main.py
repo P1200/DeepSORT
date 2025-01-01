@@ -17,4 +17,4 @@ for frame in new_capture:
     out.write(frame)
 
 out.release()
-print(f"Plik zapisano jako {output_filename}")
+print(f"File saved as {output_filename}")
