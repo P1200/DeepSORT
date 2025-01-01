@@ -26,6 +26,6 @@ def extract_descriptor(image):
     return features.squeeze()
 
 
-def compare_descriptors(desc1, desc2, threshold=0.3):
+def compare_descriptors(desc1, desc2):
     distance = cosine(desc1, desc2)
     return distance
