@@ -78,5 +78,5 @@ class Detector:
                     # Rectangle coordinates
                     x = int(center_x - w / 2)
                     y = int(center_y - h / 2)
-                    boxes.append(BoundingBox(x, y, w, h, center_x, center_y))
+                    boxes.append(BoundingBox(x, y, w, h))
         return boxes
