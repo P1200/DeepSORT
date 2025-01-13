@@ -29,7 +29,7 @@ class Tracker:
                       [0, 0, 1, 0, 0, 0, 0, 0],
                       [0, 0, 0, 1, 0, 0, 0, 0]], np.float32)
 
-        # Ustawienia dla filtru Kalmana
+        # Kalman filter settings
         self.kalman = CustomKalmanFilter(8, 4)  # 8 states (x, y, w, h, dx, dy, dw, dh), 4 observations (x, y, w, h)
 
         self.kalman.measurementMatrix = H

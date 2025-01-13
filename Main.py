@@ -1,7 +1,7 @@
 from System import System
 import cv2
 
-system = System('TestVideos/MOT16-01-raw.webm')
+system = System('TestVideos/MOT16-09-raw.webm')
 
 new_capture = system.run_with_hungarian()
 

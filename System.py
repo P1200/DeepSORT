@@ -3,6 +3,7 @@ import time
 import cv2
 import numpy as np
 
+import BoundingBox
 import PersonReIdentifier
 from Detector import Detector
 from Tracker import Tracker
@@ -48,6 +49,8 @@ class System:
 
         while ret:
             boxes = detector.detectYOLOv4(frame)
+
+            boxes = remove_duplicate_boxes(boxes)
 
             if not boxes:
                 print("No objects detected")
@@ -249,3 +252,47 @@ def draw_box_with_id(box, frame, trackers):
     cv2.rectangle(frame, (x, y), (x + w, y + h), RECTANGLE_COLOR, 2)
     cv2.putText(frame, str(tracker.tracker_id), (x, y - 1), cv2.FONT_HERSHEY_SIMPLEX, ID_SCALE, ID_COLOR,
                 ID_THICKNESS, cv2.LINE_AA)
+
+
+def calculate_iou(box1: BoundingBox, box2: BoundingBox) -> float:
+    x1 = max(box1.x, box2.x)
+    y1 = max(box1.y, box2.y)
+    x2 = min(box1.x + box1.w, box2.x + box2.w)
+    y2 = min(box1.y + box1.h, box2.y + box2.h)
+
+    # Calculate intersection area
+    intersection_width = max(0, x2 - x1)
+    intersection_height = max(0, y2 - y1)
+    intersection_area = intersection_width * intersection_height
+
+    # Calculate areas of each box
+    area_box1 = box1.w * box1.h
+    area_box2 = box2.w * box2.h
+
+    # Calculate union area
+    union_area = area_box1 + area_box2 - intersection_area
+
+    # Avoid division by zero
+    if union_area == 0:
+        return 0.0
+
+    # IoU calculation
+    return intersection_area / union_area
+
+
+def remove_duplicate_boxes(boxes, iou_threshold: float = 0.5):
+    if not boxes:
+        return []
+
+    # Sort boxes by area (descending) to prioritize larger boxes
+    boxes = sorted(boxes, key=lambda box: box.w * box.h, reverse=True)
+
+    result = []
+    while boxes:
+        current_box = boxes.pop(0)
+        result.append(current_box)
+
+        # Filter out boxes with high IoU with the current box
+        boxes = [box for box in boxes if calculate_iou(current_box, box) < iou_threshold]
+
+    return result
