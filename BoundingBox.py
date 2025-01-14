@@ -9,3 +9,11 @@ class BoundingBox:
 
     def __iter__(self):
         return iter((self.x, self.y, self.w, self.h))
+
+    def to_dict(self):
+        return {
+            "x": self.x,
+            "y": self.y,
+            "width": self.w,
+            "height": self.h
+        }

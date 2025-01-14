@@ -74,3 +74,12 @@ class Tracker:
 
     def __repr__(self):
         return str(self.tracker_id) + "|" + str(Tracker.tracker_next_id) + "|" + str(self.is_used) + "|" + str(self.age)
+
+    def to_dict(self):
+        return {
+            "id": self.tracker_id,
+            "x": self.pred_x,
+            "y": self.pred_y,
+            "width": self.pred_w,
+            "height": self.pred_h
+        }
